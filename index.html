@@ -104,6 +104,10 @@
         
         .loading-spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: white; animation: spin 1s ease-in-out infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
+        /* Efek bayangan gelap agar teks putih selalu terbaca di warna terang */
+        .btn-primary, .badge, .quadrant-badge {
+            text-shadow: 0px 1px 4px rgba(0, 0, 0, 0.8);
+        }
     </style>
 </head>
 <body>
