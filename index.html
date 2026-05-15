@@ -3,67 +3,59 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>LifeQuest Pro - Ultimate Edition</title>
+    <title>LifeQuest Pro - Cloud Sync</title>
     
     <link rel="manifest" href="./manifest.json">
     <meta name="theme-color" content="#0f172a">
     <link rel="apple-touch-icon" href="./icon.svg">
     
+    <script async defer src="https://apis.google.com/js/api.js" onload="gapiLoaded()"></script>
+    <script async defer src="https://accounts.google.com/gsi/client" onload="gisLoaded()"></script>
+
     <style>
-        :root {
-            --bg-color: #0f172a; --surface-color: #1e293b; --text-primary: #f8fafc;
-            --text-secondary: #94a3b8; --accent-primary: #6366f1; --success: #10b981;
-            --warning: #f59e0b; --danger: #ef4444; --card-radius: 16px;
-            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
+        :root { --bg-color: #0f172a; --surface-color: #1e293b; --text-primary: #f8fafc; --text-secondary: #94a3b8; --accent-primary: #6366f1; --success: #10b981; --warning: #f59e0b; --danger: #ef4444; --card-radius: 16px; --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, sans-serif; }
         body { background-color: var(--bg-color); color: var(--text-primary); min-height: 100vh; overflow-x: hidden; padding-bottom: 100px; overscroll-behavior-x: none; }
         
-        /* Ikon SVG */
         .icon { width: 1.2em; height: 1.2em; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
-        .icon-sm { width: 1em; height: 1em; }
-        .icon-lg { width: 1.5em; height: 1.5em; }
-        .icon-xl { width: 2.5em; height: 2.5em; }
+        .icon-sm { width: 1em; height: 1em; } .icon-lg { width: 1.5em; height: 1.5em; } .icon-xl { width: 2.5em; height: 2.5em; }
 
-        /* Header Elements */
-        header { background: rgba(30, 41, 59, 0.8); backdrop-filter: blur(12px); position: sticky; top: 0; z-index: 90; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        #global-xp-bar-container { width: 100%; height: 4px; background: rgba(255,255,255,0.1); position: fixed; top: 0; z-index: 100; }
+        #global-xp-bar { height: 100%; background: linear-gradient(90deg, #3b82f6, #c084fc); width: 0%; transition: width 0.5s ease-out; }
+
+        header { background: rgba(30, 41, 59, 0.8); backdrop-filter: blur(12px); position: sticky; top: 4px; z-index: 90; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); }
         .header-left, .header-right { display: flex; align-items: center; gap: 8px; }
         .menu-btn { background: transparent; border: none; color: var(--text-primary); cursor: pointer; display: flex; align-items: center; }
-        .streak-btn { background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.2); padding: 6px 12px; border-radius: 999px; color: var(--warning); cursor: pointer; font-weight: 700; display: flex; align-items: center; gap: 6px; font-size: 0.85rem; }
+        .level-badge { background: rgba(192, 132, 252, 0.15); border: 1px solid rgba(192, 132, 252, 0.3); padding: 6px 10px; border-radius: 999px; color: #c084fc; font-weight: 700; font-size: 0.8rem; display: flex; align-items: center; gap: 4px; }
+        .streak-btn { background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.2); padding: 6px 10px; border-radius: 999px; color: var(--warning); cursor: pointer; font-weight: 700; display: flex; align-items: center; gap: 4px; font-size: 0.8rem; }
         .streak-btn.active { background: var(--warning); color: var(--bg-color); }
-        .inventory-btn { background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2); padding: 6px 12px; border-radius: 999px; font-weight: 600; color: var(--success); cursor: pointer; display: flex; align-items: center; gap: 4px; font-size: 0.85rem; }
-        .wallet { background: rgba(99, 102, 241, 0.15); border: 1px solid rgba(99, 102, 241, 0.3); padding: 6px 12px; border-radius: 999px; display: flex; align-items: center; gap: 6px; font-weight: 600; color: #818cf8; font-size: 0.85rem; }
+        .inventory-btn { background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2); padding: 6px 10px; border-radius: 999px; font-weight: 600; color: var(--success); cursor: pointer; display: flex; align-items: center; gap: 4px; font-size: 0.8rem; }
+        .wallet { background: rgba(99, 102, 241, 0.15); border: 1px solid rgba(99, 102, 241, 0.3); padding: 6px 10px; border-radius: 999px; display: flex; align-items: center; gap: 4px; font-weight: 600; color: #818cf8; font-size: 0.8rem; }
 
-        /* Sidebar */
-        .sidebar { position: fixed; top: 0; left: -300px; width: 280px; height: 100dvh; background: var(--surface-color); z-index: 100; padding: 24px; box-shadow: 10px 0 30px rgba(0,0,0,0.5); transition: var(--transition); display: flex; flex-direction: column; overflow-y: auto; }
+        .sidebar { position: fixed; top: 0; left: -300px; width: 280px; height: 100dvh; background: var(--surface-color); z-index: 105; padding: 24px; box-shadow: 10px 0 30px rgba(0,0,0,0.5); transition: var(--transition); display: flex; flex-direction: column; overflow-y: auto; }
         .sidebar.open { left: 0; }
         .sidebar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; padding-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); }
         .menu-item { padding: 12px 0; color: var(--text-primary); cursor: pointer; display: flex; align-items: center; gap: 12px; transition: var(--transition); }
-        .menu-item:hover { color: var(--accent-primary); padding-left: 8px; }
-
-        /* Navigation */
+        
         .tabs-container { max-width: 800px; margin: 15px auto 5px; padding: 0 20px; }
         .tabs { display: flex; background: rgba(255,255,255,0.05); border-radius: 12px; padding: 4px; gap: 4px; }
-        .tab-btn { flex: 1; padding: 10px; display: flex; justify-content: center; align-items: center; gap: 6px; background: transparent; border: none; color: var(--text-secondary); font-weight: 600; border-radius: 8px; cursor: pointer; font-size: 0.9rem; }
+        .tab-btn { flex: 1; padding: 10px; display: flex; justify-content: center; align-items: center; gap: 6px; background: transparent; border: none; color: var(--text-secondary); font-weight: 600; border-radius: 8px; cursor: pointer; font-size: 0.9rem; transition: var(--transition); }
         .tab-btn.active { background: var(--surface-color); color: var(--text-primary); box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
 
         .sub-toolbar { max-width: 800px; margin: 0 auto 15px; padding: 0 20px; display: flex; justify-content: space-between; align-items: center; }
         .cycle-pills { display: flex; gap: 6px; }
-        .pill { background: transparent; border: 1px solid rgba(255,255,255,0.1); color: var(--text-secondary); padding: 5px 12px; border-radius: 999px; font-size: 0.8rem; font-weight: 600; cursor: pointer; }
+        .pill { background: transparent; border: 1px solid rgba(255,255,255,0.1); color: var(--text-secondary); padding: 5px 12px; border-radius: 999px; font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: var(--transition); }
         .pill.active { background: var(--accent-primary); color: white; border-color: var(--accent-primary); }
         .filter-btn { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: var(--text-primary); padding: 6px 12px; border-radius: 8px; cursor: pointer; font-size: 0.85rem; display: flex; align-items: center; gap: 6px; }
 
-        /* Main Grid & Swipe Gestures */
         main { max-width: 800px; margin: 0 auto; padding: 0 20px 40px; min-height: 70vh; }
-        .dashboard-section { display: none; }
-        .dashboard-section.active { display: block; animation: slideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .dashboard-section { display: none; } .dashboard-section.active { display: block; animation: slideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         @keyframes slideIn { from { opacity: 0; transform: translateX(15px); } to { opacity: 1; transform: translateX(0); } }
         
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
         .swipe-container { position: relative; overflow: hidden; border-radius: var(--card-radius); user-select: none; touch-action: pan-y; }
         .swipe-action-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: var(--danger); display: flex; align-items: center; justify-content: flex-end; padding-right: 25px; color: white; border-radius: var(--card-radius); z-index: 1; }
         
-        /* Cards */
         .card { position: relative; background: var(--surface-color); border-radius: var(--card-radius); padding: 18px; border: 1px solid rgba(255,255,255,0.05); z-index: 2; transition: transform 0.1s ease-out; display: flex; flex-direction: column; cursor: pointer; }
         .card.disabled { opacity: 0.6; filter: grayscale(30%); }
         .quest-header { display: flex; justify-content: space-between; margin-bottom: 10px; align-items: center; }
@@ -71,48 +63,47 @@
         .quest-desc { font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 18px; line-height: 1.4; flex-grow: 1; pointer-events: none; }
         .badge { font-size: 0.7rem; padding: 3px 8px; border-radius: 6px; font-weight: 700; background: rgba(255,255,255,0.1); display: flex; align-items: center; gap: 4px; }
         .edit-btn { font-size: 0.75rem; color: var(--text-secondary); display: flex; align-items: center; gap: 4px; cursor: pointer; }
+        
+        .quadrant-badge { font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; font-weight: 700; margin-left: 6px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); }
+        .quadrant-badge.q1 { color: #ef4444; border-color: rgba(239, 68, 68, 0.3); } .quadrant-badge.q2 { color: #3b82f6; border-color: rgba(59, 130, 246, 0.3); }
 
         .reward-card { background: var(--surface-color); border-radius: var(--card-radius); border: 1px solid rgba(255,255,255,0.05); overflow: hidden; display: flex; flex-direction: column; }
         .reward-banner { height: 80px; display: flex; justify-content: center; align-items: center; color: white; position: relative; }
         .reward-edit-icon { position: absolute; top: 10px; right: 10px; font-size: 0.7rem; background: rgba(0,0,0,0.3); padding: 4px 8px; border-radius: 6px; color: white; backdrop-filter: blur(4px); display: flex; align-items: center; gap: 4px; cursor: pointer; }
         .reward-body { padding: 15px; flex-grow: 1; display: flex; flex-direction: column; }
 
-        /* Buttons & Utility */
         .btn { width: 100%; padding: 10px; border: none; border-radius: 10px; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: var(--transition); display: flex; justify-content: center; align-items: center; gap: 6px; }
         .btn-primary { background: var(--accent-primary); color: white; }
         .btn-outline { background: transparent; border: 1px solid rgba(255,255,255,0.15); color: var(--text-primary); }
-        .btn-undo { border-color: var(--danger); color: var(--danger); }
+        .btn-undo { border-color: var(--danger); color: var(--danger); background: rgba(239, 68, 68, 0.05); }
         .btn-claim { background: linear-gradient(135deg, #3b82f6, #6366f1); color: white; }
+        .btn-claim:disabled { background: #334155; color: #64748b; opacity: 0.7; cursor: not-allowed; }
+        .btn-cloud { background: linear-gradient(135deg, #0ea5e9, #3b82f6); color: white; border: none; box-shadow: 0 4px 15px rgba(14, 165, 233, 0.3); }
         
         .fab { position: fixed; bottom: 20px; right: 20px; width: 56px; height: 56px; border-radius: 50%; background: linear-gradient(135deg, #6366f1, #c084fc); color: white; border: none; box-shadow: 0 8px 20px rgba(99, 102, 241, 0.4); cursor: pointer; display: flex; justify-content: center; align-items: center; z-index: 80; }
 
-        /* Modals */
         .modal { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.9); background: var(--surface-color); padding: 20px; border-radius: var(--card-radius); width: 90%; max-width: 380px; z-index: 100; opacity: 0; visibility: hidden; transition: var(--transition); border: 1px solid rgba(255,255,255,0.1); max-height: 90vh; overflow-y: auto; }
         .modal.open { opacity: 1; visibility: visible; transform: translate(-50%, -50%) scale(1); }
         .modal-title { margin-bottom: 15px; display: flex; align-items: center; gap: 8px; font-size: 1.1rem; font-weight: bold; }
-        .form-group { margin-bottom: 16px; }
-        .form-group label { display: block; margin-bottom: 8px; font-size: 0.85rem; color: var(--text-secondary); }
-        .form-control { width: 100%; padding: 10px; background: var(--bg-color); border: 1px solid rgba(255,255,255,0.1); color: white; border-radius: 8px; }
+        .form-group { margin-bottom: 16px; } .form-group label { display: block; margin-bottom: 8px; font-size: 0.85rem; color: var(--text-secondary); }
+        .form-control { width: 100%; padding: 10px; background: var(--bg-color); border: 1px solid rgba(255,255,255,0.1); color: white; border-radius: 8px; font-family: monospace; }
         .color-picker { width: 100%; height: 40px; border: none; border-radius: 8px; background: none; cursor: pointer; }
-        .modal-actions { display: flex; gap: 12px; margin-top: 24px; }
-        .modal-actions .btn { flex: 1; }
+        .modal-actions { display: flex; gap: 12px; margin-top: 24px; } .modal-actions .btn { flex: 1; }
 
         .color-swatch { width: 32px; height: 32px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: var(--transition); flex-shrink: 0; }
         .color-swatch.active { border-color: white; transform: scale(1.15); box-shadow: 0 0 12px rgba(255,255,255,0.3); }
-
-        .streak-option { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); padding: 12px; border-radius: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
-        .streak-option.available { border-color: var(--warning); background: rgba(245, 158, 11, 0.05); }
-        .streak-option.claimed { opacity: 0.4; pointer-events: none; }
 
         .inv-item { background: var(--bg-color); border: 1px solid rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
         .inv-item.used { opacity: 0.5; filter: grayscale(100%); }
 
         .toast { position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%) translateY(20px); background: rgba(16, 185, 129, 0.95); color: white; padding: 10px 18px; border-radius: 999px; font-weight: 600; opacity: 0; transition: var(--transition); z-index: 1000; display: flex; align-items: center; gap: 8px; }
         .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-        
         .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 95; display: none; opacity: 0; transition: opacity 0.3s; }
         .overlay.show { display: block; opacity: 1; }
         .empty-state { text-align: center; color: var(--text-secondary); padding: 40px 0; font-style: italic; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+        
+        .loading-spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: white; animation: spin 1s ease-in-out infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
@@ -121,6 +112,7 @@
         <symbol id="icon-menu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></symbol>
         <symbol id="icon-fire" viewBox="0 0 24 24"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></symbol>
         <symbol id="icon-coin" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M9 12h6"/></symbol>
+        <symbol id="icon-xp" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></symbol>
         <symbol id="icon-undo" viewBox="0 0 24 24"><path d="M3 7v6h6M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></symbol>
         <symbol id="icon-check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></symbol>
         <symbol id="icon-gift" viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="14" rx="2"/><path d="M12 8v14M3 13h18M12 5a3 3 0 1 0-3 3M12 5a3 3 0 1 1 3 3"/></symbol>
@@ -135,41 +127,54 @@
         <symbol id="icon-folder" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></symbol>
         <symbol id="icon-filter" viewBox="0 0 24 24"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></symbol>
         <symbol id="icon-close" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></symbol>
+        <symbol id="icon-cloud" viewBox="0 0 24 24"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></symbol>
+        <symbol id="icon-upload" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></symbol>
+        <symbol id="icon-download" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></symbol>
     </svg>
+
+    <div id="global-xp-bar-container"><div id="global-xp-bar"></div></div>
 
     <header>
         <div class="header-left">
             <button class="menu-btn" onclick="toggleSidebar()"><svg class="icon icon-lg"><use href="#icon-menu"></use></svg></button>
-            <button id="streak-display" class="streak-btn" onclick="openStreakModal()">
-                <svg class="icon"><use href="#icon-fire"></use></svg> <span id="streak-count">1</span>
-            </button>
+            <div class="level-badge" id="header-level-badge"><svg class="icon icon-sm"><use href="#icon-xp"></use></svg> Lv.1</div>
         </div>
         <div class="header-right">
-            <button class="inventory-btn" onclick="openInventoryModal()"><svg class="icon"><use href="#icon-bag"></use></svg> Hadiah</button>
+            <button id="streak-display" class="streak-btn" onclick="openStreakModal()"><svg class="icon"><use href="#icon-fire"></use></svg> <span id="streak-count">1</span></button>
+            <button class="inventory-btn" onclick="openInventoryModal()"><svg class="icon"><use href="#icon-bag"></use></svg></button>
             <div class="wallet"><svg class="icon"><use href="#icon-coin"></use></svg> <span id="point-balance">0</span></div>
         </div>
     </header>
 
     <div class="sidebar" id="sidebar">
         <div class="sidebar-header">
-            <h3>Pengaturan</h3>
+            <h3>Menu Utama</h3>
             <button class="menu-btn" onclick="toggleSidebar()"><svg class="icon icon-lg"><use href="#icon-close"></use></svg></button>
         </div>
-        <input type="file" id="restoreFile" accept=".json" style="display:none" onchange="processRestore(event)">
+        <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px; margin-bottom: 20px; text-align: center;">
+            <div id="sidebar-title" style="font-weight: 700; color: #c084fc; margin-bottom: 4px;">Novice</div>
+            <div id="sidebar-xp-text" style="font-size: 0.8rem; color: var(--text-secondary);">0 / 100 XP</div>
+        </div>
         
-        <div class="menu-item" style="color:var(--warning)" onclick="openTrash()">
-            <svg class="icon"><use href="#icon-trash"></use></svg> Keranjang Sampah
+        <div style="font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Penyimpanan Awan</div>
+        <div class="menu-item" style="color:#0ea5e9" onclick="openCloudModal()">
+            <svg class="icon"><use href="#icon-cloud"></use></svg> Setup Google Drive
         </div>
-        <div class="menu-item" onclick="backupData()" style="margin-top: 16px;">
-            <svg class="icon"><use href="#icon-save"></use></svg> Cadangkan Data
+        <div class="menu-item" id="btn-drive-backup" onclick="backupToDrive()" style="display:none;">
+            <svg class="icon"><use href="#icon-upload"></use></svg> Backup ke Drive
         </div>
-        <div class="menu-item" onclick="document.getElementById('restoreFile').click()">
-            <svg class="icon"><use href="#icon-folder"></use></svg> Pulihkan Data
+        <div class="menu-item" id="btn-drive-restore" onclick="restoreFromDrive()" style="display:none; margin-bottom: 15px;">
+            <svg class="icon"><use href="#icon-download"></use></svg> Pulihkan dari Drive
         </div>
+
+        <div style="font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; margin-top: 10px;">Lokal & Pengaturan</div>
+        <input type="file" id="restoreFile" accept=".json" style="display:none" onchange="processRestore(event)">
+        <div class="menu-item" onclick="backupData()"><svg class="icon"><use href="#icon-save"></use></svg> Export Data Lokal</div>
+        <div class="menu-item" onclick="document.getElementById('restoreFile').click()"><svg class="icon"><use href="#icon-folder"></use></svg> Import Data Lokal</div>
+        <div class="menu-item" style="color:var(--warning)" onclick="openTrash()"><svg class="icon"><use href="#icon-trash"></use></svg> Keranjang Sampah</div>
+        
         <div style="margin-top:auto; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 16px;"></div>
-        <div class="menu-item" style="color:var(--danger)" onclick="deleteAllData()">
-            <svg class="icon"><use href="#icon-trash"></use></svg> Hapus Semua Data
-        </div>
+        <div class="menu-item" style="color:var(--danger)" onclick="deleteAllData()"><svg class="icon"><use href="#icon-trash"></use></svg> Hapus Semua Data</div>
     </div>
 
     <div class="tabs-container">
@@ -192,9 +197,7 @@
         <div id="section-quests" class="dashboard-section active"><div class="grid" id="quests-container"></div></div>
         <div id="section-rewards" class="dashboard-section"><div class="grid" id="rewards-container"></div></div>
         <div id="section-trash" class="dashboard-section">
-            <h2 style="font-size: 1.1rem; margin-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px; display: flex; align-items: center; gap: 8px;">
-                <svg class="icon"><use href="#icon-trash"></use></svg> Riwayat & Sampah
-            </h2>
+            <h2 style="font-size: 1.1rem; margin-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 8px; display: flex; align-items: center; gap: 8px;"><svg class="icon"><use href="#icon-trash"></use></svg> Riwayat & Sampah</h2>
             <div class="grid" id="trash-container"></div>
         </div>
     </main>
@@ -202,20 +205,51 @@
     <button class="fab" id="main-fab" onclick="handleFabClick()"><svg class="icon icon-lg"><use href="#icon-plus"></use></svg></button>
     <div class="toast" id="toast-msg"></div>
 
+    <div class="modal" id="cloudModal">
+        <h3 class="modal-title" style="color: #0ea5e9;"><svg class="icon"><use href="#icon-cloud"></use></svg> Konfigurasi Google Drive</h3>
+        <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 16px; line-height: 1.4;">
+            Karena alasan keamanan Google, Anda harus menggunakan Client ID & API Key milik Anda sendiri.
+        </p>
+        <div class="form-group">
+            <label>Google Client ID</label>
+            <input type="text" id="gcp-client-id" class="form-control" placeholder="12345-abcde.apps.googleusercontent.com">
+        </div>
+        <div class="form-group">
+            <label>Google API Key</label>
+            <input type="text" id="gcp-api-key" class="form-control" placeholder="AIzaSyB...">
+        </div>
+        <div class="modal-actions">
+            <button class="btn btn-outline" onclick="closeModals()">Batal</button>
+            <button class="btn btn-cloud" onclick="saveCloudConfig()">Simpan & Hubungkan</button>
+        </div>
+    </div>
+
     <div class="modal" id="questModal">
         <h3 class="modal-title" id="questModalTitle"><svg class="icon"><use href="#icon-edit"></use></svg> Atur Quest</h3>
         <input type="hidden" id="quest-id">
         <div class="form-group"><label>Judul Quest</label><input type="text" id="quest-title" class="form-control"></div>
         <div class="form-group"><label>Deskripsi</label><input type="text" id="quest-desc" class="form-control"></div>
         <div style="display:flex; gap:12px;">
-            <div class="form-group" style="flex:1;"><label>Poin</label><input type="number" id="quest-points" class="form-control"></div>
+            <div class="form-group" style="flex:1;"><label>Koin (PTS)</label><input type="number" id="quest-points" class="form-control"></div>
+            <div class="form-group" style="flex:1;"><label>XP (Level)</label><input type="number" id="quest-xp" class="form-control"></div>
+        </div>
+        <div style="display:flex; gap:12px;">
+            <div class="form-group" style="flex:2;">
+                <label>Prioritas</label>
+                <select id="quest-quadrant" class="form-control">
+                    <option value="Q1">Q1: Penting & Mendesak</option>
+                    <option value="Q2">Q2: Penting, Tdk Mendesak</option>
+                    <option value="Q3">Q3: Tdk Penting, Mendesak</option>
+                    <option value="Q4">Q4: Rutinitas Biasa</option>
+                </select>
+            </div>
             <div class="form-group" style="flex:1;"><label>Warna</label><input type="color" id="quest-color" class="color-picker"></div>
         </div>
-        <div class="form-group"><label>Siklus</label>
+        <div class="form-group"><label>Siklus Tugas</label>
             <select id="quest-cycle" class="form-control">
                 <option value="harian">Harian (Reset 01:00 AM)</option>
-                <option value="mingguan">Mingguan</option>
-                <option value="bulanan">Bulanan</option>
+                <option value="mingguan">Mingguan (Reset Senin)</option>
+                <option value="bulanan">Bulanan (Reset Tgl 1)</option>
             </select>
         </div>
         <div class="modal-actions"><button class="btn btn-outline" onclick="closeModals()">Batal</button><button class="btn btn-primary" onclick="saveQuest()">Simpan</button></div>
@@ -231,18 +265,8 @@
 
     <div class="modal" id="filterModal">
         <h3 class="modal-title"><svg class="icon"><use href="#icon-filter"></use></svg> Filter & Urutkan</h3>
-        <div class="form-group">
-            <label>Urutkan</label>
-            <select id="sort-select" class="form-control" onchange="applyFilters()">
-                <option value="newest">Terbaru</option>
-                <option value="highest">Poin Tertinggi</option>
-                <option value="lowest">Poin Terendah</option>
-            </select>
-        </div>
-        <div class="form-group" style="margin-top: 20px;">
-            <label>Filter Warna</label>
-            <div id="color-swatches-container" style="display: flex; gap: 12px; flex-wrap: wrap;"></div>
-        </div>
+        <div class="form-group"><label>Urutkan</label><select id="sort-select" class="form-control" onchange="applyFilters()"><option value="newest">Terbaru</option><option value="highest">Poin Tertinggi</option><option value="lowest">Poin Terendah</option></select></div>
+        <div class="form-group" style="margin-top: 20px;"><label>Filter Warna</label><div id="color-swatches-container" style="display: flex; gap: 12px; flex-wrap: wrap;"></div></div>
         <div class="modal-actions"><button class="btn btn-primary" onclick="closeModals()">Selesai</button></div>
     </div>
 
@@ -261,436 +285,273 @@
     <div class="overlay" id="overlay" onclick="closeModals()"></div>
 
     <script>
-        let state = { 
-            points: 0, 
-            quests: [], 
-            rewards: [], 
-            inventory: [], 
-            streak: 1, 
-            lastLoginDate: null, 
-            claimedStreaks: [], 
-            currentCycle: 'harian', 
-            currentTab: 'quests', 
-            currentSort: 'newest', 
-            currentColorFilter: 'all' 
-        };
-        
+        let state = { points: 0, totalXP: 0, currentLevel: 1, currentTitle: 'Novice', quests: [], rewards: [], inventory: [], streak: 1, lastLoginDate: null, claimedStreaks: [], currentCycle: 'harian', currentTab: 'quests', currentSort: 'newest', currentColorFilter: 'all' };
         const RESET_HOUR = 1;
         const rewardGradients = ['linear-gradient(135deg, #2563eb, #8b5cf6)','linear-gradient(135deg, #059669, #3b82f6)','linear-gradient(135deg, #ea580c, #e11d48)','linear-gradient(135deg, #db2777, #7c3aed)','linear-gradient(135deg, #4f46e5, #0ea5e9)'];
 
-        // --- 1. CORE DATA MANAGEMENT ---
-        function loadData() {
-            try {
-                const saved = localStorage.getItem('lifeQuest_v3');
-                if (saved) {
-                    state = { ...state, ...JSON.parse(saved) };
-                    // Perbaikan struktur data jika ada yang salah sebelumnya
-                    if (!Array.isArray(state.quests)) state.quests = [];
-                    if (!Array.isArray(state.rewards)) state.rewards = [];
-                    if (!Array.isArray(state.inventory)) state.inventory = [];
-                    if (!Array.isArray(state.claimedStreaks)) state.claimedStreaks = [];
-                }
-            } catch (err) { console.error("Load failed", err); }
-            
-            checkStreak();
-            updateColorFilterOptions();
-            renderAll();
+        const DB_NAME = 'LifeQuestDB';
+        const STORE_NAME = 'app_state';
+
+        // --- GOOGLE DRIVE API LOGIC ---
+        let tokenClient;
+        let gapiInited = false;
+        let gisInited = false;
+        const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest';
+        const SCOPES = 'https://www.googleapis.com/auth/drive.file';
+        let G_CLIENT_ID = localStorage.getItem('gcp_client_id') || '';
+        let G_API_KEY = localStorage.getItem('gcp_api_key') || '';
+        let driveFileId = localStorage.getItem('gcp_file_id') || null;
+
+        function gapiLoaded() { gapi.load('client', intializeGapiClient); }
+        async function intializeGapiClient() {
+            if(!G_API_KEY) return;
+            try { await gapi.client.init({ apiKey: G_API_KEY, discoveryDocs: [DISCOVERY_DOC] }); gapiInited = true; checkCloudButtons(); } catch(e) { console.error("GAPI Init Error", e); }
+        }
+        function gisLoaded() {
+            if(!G_CLIENT_ID) return;
+            tokenClient = google.accounts.oauth2.initTokenClient({ client_id: G_CLIENT_ID, scope: SCOPES, callback: '' });
+            gisInited = true; checkCloudButtons();
         }
 
-        function saveData() { 
-            localStorage.setItem('lifeQuest_v3', JSON.stringify(state)); 
-        }
-
-        // --- 2. LOGIKA RESET & STREAK ---
-        function checkStreak() {
-            const now = new Date(); 
-            const todayStr = now.toISOString().split('T')[0];
-            
-            if (!state.lastLoginDate) { 
-                state.lastLoginDate = todayStr; state.streak = 1; 
-            } else {
-                const last = new Date(state.lastLoginDate);
-                const diffDays = Math.round((now.setHours(0,0,0,0) - last.setHours(0,0,0,0)) / (1000*60*60*24));
-                
-                if (diffDays === 1) { 
-                    state.streak++; state.lastLoginDate = todayStr; 
-                } else if (diffDays > 1) { 
-                    state.streak = 1; state.claimedStreaks = []; state.lastLoginDate = todayStr; 
-                }
+        function checkCloudButtons() {
+            if(G_CLIENT_ID && G_API_KEY) {
+                document.getElementById('btn-drive-backup').style.display = 'flex';
+                document.getElementById('btn-drive-restore').style.display = 'flex';
             }
-            
-            document.getElementById('streak-count').innerText = state.streak;
-            document.getElementById('streak-display').classList.toggle('active', state.streak > 1);
-            saveData();
+        }
+
+        function openCloudModal() {
+            document.getElementById('gcp-client-id').value = G_CLIENT_ID;
+            document.getElementById('gcp-api-key').value = G_API_KEY;
+            document.getElementById('cloudModal').classList.add('open'); document.getElementById('overlay').classList.add('show');
+        }
+
+        function saveCloudConfig() {
+            G_CLIENT_ID = document.getElementById('gcp-client-id').value.trim();
+            G_API_KEY = document.getElementById('gcp-api-key').value.trim();
+            localStorage.setItem('gcp_client_id', G_CLIENT_ID);
+            localStorage.setItem('gcp_api_key', G_API_KEY);
+            closeModals(); showToast('cloud', 'Config Disimpan. Refresh halaman.');
+            setTimeout(() => location.reload(), 1500);
+        }
+
+        async function authenticateGoogle(callback) {
+            if (!gapiInited || !gisInited) { showToast('info', 'Google API belum siap/dikonfigurasi.'); return; }
+            if (gapi.client.getToken() === null) {
+                tokenClient.callback = async (resp) => { if (resp.error) { throw resp; } await callback(); };
+                tokenClient.requestAccessToken({prompt: 'consent'});
+            } else { await callback(); }
+        }
+
+        async function backupToDrive() {
+            const btn = document.getElementById('btn-drive-backup'); btn.innerHTML = `<div class="loading-spinner"></div> Menyinkronkan...`;
+            await authenticateGoogle(async () => {
+                try {
+                    const fileContent = JSON.stringify(state);
+                    const fileMetadata = { name: 'lifeQuest_backup.json', mimeType: 'application/json' };
+                    const boundary = '-------314159265358979323846';
+                    const delimiter = "\r\n--" + boundary + "\r\n";
+                    const close_delim = "\r\n--" + boundary + "--";
+                    const multipartRequestBody = delimiter + 'Content-Type: application/json\r\n\r\n' + JSON.stringify(fileMetadata) + delimiter + 'Content-Type: application/json\r\n\r\n' + fileContent + close_delim;
+
+                    let request;
+                    if(driveFileId) {
+                        // Update file lama
+                        request = gapi.client.request({ 'path': `/upload/drive/v3/files/${driveFileId}`, 'method': 'PATCH', 'params': {'uploadType': 'multipart'}, 'headers': {'Content-Type': 'multipart/related; boundary="' + boundary + '"'}, 'body': multipartRequestBody });
+                    } else {
+                        // Cari file dulu
+                        let response = await gapi.client.drive.files.list({q: "name='lifeQuest_backup.json' and trashed=false", spaces: 'drive'});
+                        if(response.result.files && response.result.files.length > 0) {
+                            driveFileId = response.result.files[0].id; localStorage.setItem('gcp_file_id', driveFileId);
+                            request = gapi.client.request({ 'path': `/upload/drive/v3/files/${driveFileId}`, 'method': 'PATCH', 'params': {'uploadType': 'multipart'}, 'headers': {'Content-Type': 'multipart/related; boundary="' + boundary + '"'}, 'body': multipartRequestBody });
+                        } else {
+                            // Buat file baru
+                            request = gapi.client.request({ 'path': '/upload/drive/v3/files', 'method': 'POST', 'params': {'uploadType': 'multipart'}, 'headers': {'Content-Type': 'multipart/related; boundary="' + boundary + '"'}, 'body': multipartRequestBody });
+                        }
+                    }
+                    
+                    let res = await request;
+                    if(res.result.id) { driveFileId = res.result.id; localStorage.setItem('gcp_file_id', driveFileId); }
+                    showToast('cloud', 'Backup Tersimpan di Drive!');
+                } catch(e) { console.error(e); showToast('info', 'Gagal Backup ke Drive.'); }
+                finally { btn.innerHTML = `<svg class="icon"><use href="#icon-upload"></use></svg> Backup ke Drive`; toggleSidebar(); }
+            });
+        }
+
+        async function restoreFromDrive() {
+            const btn = document.getElementById('btn-drive-restore'); btn.innerHTML = `<div class="loading-spinner"></div> Mengunduh...`;
+            await authenticateGoogle(async () => {
+                try {
+                    let fileIdToDownload = driveFileId;
+                    if(!fileIdToDownload) {
+                        let response = await gapi.client.drive.files.list({q: "name='lifeQuest_backup.json' and trashed=false", spaces: 'drive'});
+                        if(response.result.files && response.result.files.length > 0) {
+                            fileIdToDownload = response.result.files[0].id; localStorage.setItem('gcp_file_id', fileIdToDownload);
+                        } else { throw new Error("File tidak ditemukan di Drive"); }
+                    }
+
+                    let response = await gapi.client.drive.files.get({ fileId: fileIdToDownload, alt: 'media' });
+                    if(response.body) {
+                        const data = JSON.parse(response.body);
+                        if(data.points !== undefined) {
+                            localStorage.setItem('lifeQuest_v3', JSON.stringify(data));
+                            loadData(); showToast('cloud', "Berhasil Dipulihkan dari Drive!");
+                        }
+                    }
+                } catch(e) { console.error(e); showToast('info', 'Gagal menemukan backup di Drive.'); }
+                finally { btn.innerHTML = `<svg class="icon"><use href="#icon-download"></use></svg> Pulihkan dari Drive`; toggleSidebar(); }
+            });
+        }
+        // --- END GOOGLE DRIVE API LOGIC ---
+
+        function openDB() { return new Promise((resolve, reject) => { const request = indexedDB.open(DB_NAME, 1); request.onupgradeneeded = (e) => { e.target.result.createObjectStore(STORE_NAME); }; request.onsuccess = () => resolve(request.result); request.onerror = () => reject('IDB Error'); }); }
+        async function saveData() { try { const db = await openDB(); const tx = db.transaction(STORE_NAME, 'readwrite'); tx.objectStore(STORE_NAME).put(state, 'latest_save'); localStorage.setItem('lifeQuest_v3', JSON.stringify(state)); } catch (err) {} }
+
+        async function loadData() {
+            try {
+                const db = await openDB(); const tx = db.transaction(STORE_NAME, 'readonly');
+                const idbData = await new Promise(res => { const req = tx.objectStore(STORE_NAME).get('latest_save'); req.onsuccess = () => res(req.result); req.onerror = () => res(null); });
+                const localData = localStorage.getItem('lifeQuest_v3');
+                let finalData = idbData || (localData ? JSON.parse(localData) : null);
+                if (finalData) { state = { ...state, ...finalData }; if (!Array.isArray(state.quests)) state.quests = []; if (!Array.isArray(state.rewards)) state.rewards = []; if (!Array.isArray(state.inventory)) state.inventory = []; }
+            } catch (err) { const localData = localStorage.getItem('lifeQuest_v3'); if (localData) state = { ...state, ...JSON.parse(localData) }; }
+            checkStreak(); updateColorFilterOptions(); updateLevelUI(); renderAll(); checkCloudButtons();
+        }
+
+        function calculateRPGStats(xp) {
+            const exactLevel = Math.pow(xp / 100, 1 / 1.7); const level = Math.max(1, Math.floor(exactLevel));
+            const xpCurrentBase = Math.floor(100 * Math.pow(level, 1.7)); const xpNextBase = Math.floor(100 * Math.pow(level + 1, 1.7));
+            let title = "Novice"; if (level >= 5) title = "Apprentice"; if (level >= 15) title = "Scholar"; if (level >= 30) title = "Grandmaster";
+            return { level, title, currentProgress: xp - xpCurrentBase, neededForNext: xpNextBase - xpCurrentBase, percentage: Math.min(100, ((xp - xpCurrentBase) / (xpNextBase - xpCurrentBase)) * 100) };
+        }
+
+        function updateLevelUI() {
+            const stats = calculateRPGStats(state.totalXP || 0);
+            document.getElementById('header-level-badge').innerHTML = `<svg class="icon icon-sm"><use href="#icon-xp"></use></svg> Lv.${stats.level}`;
+            document.getElementById('global-xp-bar').style.width = `${stats.percentage}%`;
+            document.getElementById('sidebar-title').innerText = stats.title;
+            document.getElementById('sidebar-xp-text').innerText = `${Math.floor(stats.currentProgress)} / ${stats.neededForNext} XP`;
+        }
+
+        function checkStreak() {
+            const now = new Date(); const todayStr = now.toISOString().split('T')[0];
+            if (!state.lastLoginDate) { state.lastLoginDate = todayStr; state.streak = 1; } 
+            else {
+                const last = new Date(state.lastLoginDate); const diffDays = Math.round((now.setHours(0,0,0,0) - last.setHours(0,0,0,0)) / (1000*60*60*24));
+                if (diffDays === 1) { state.streak++; state.lastLoginDate = todayStr; } else if (diffDays > 1) { state.streak = 1; state.claimedStreaks = []; state.lastLoginDate = todayStr; }
+            }
+            document.getElementById('streak-count').innerText = state.streak; document.getElementById('streak-display').classList.toggle('active', state.streak > 1); saveData();
         }
 
         function isQuestAvailable(q) {
             if (!q.lastCompleted) return true;
-            const now = new Date(); const last = new Date(q.lastCompleted);
-            let currentReset = new Date(now); 
-            
-            if (now.getHours() < RESET_HOUR) currentReset.setDate(currentReset.getDate() - 1);
-            currentReset.setHours(RESET_HOUR, 0, 0, 0);
-            
-            if (q.cycle === 'harian') return last < currentReset;
-            return true;
+            const now = new Date(); const last = new Date(q.lastCompleted); let currentDailyReset = new Date(now); 
+            if (now.getHours() < RESET_HOUR) { currentDailyReset.setDate(currentDailyReset.getDate() - 1); }
+            currentDailyReset.setHours(RESET_HOUR, 0, 0, 0);
+            if (q.cycle === 'harian') { return last < currentDailyReset; } 
+            else if (q.cycle === 'mingguan') { let currentWeeklyReset = new Date(currentDailyReset); let currentDay = currentWeeklyReset.getDay(); let daysToMonday = (currentDay === 0 ? 6 : currentDay - 1); currentWeeklyReset.setDate(currentWeeklyReset.getDate() - daysToMonday); return last < currentWeeklyReset; } 
+            else if (q.cycle === 'bulanan') { let currentMonthlyReset = new Date(currentDailyReset); currentMonthlyReset.setDate(1); return last < currentMonthlyReset; }
+            return true; 
         }
 
-        // --- 3. FILTER & SORTIR WARNA ---
-        function applyFilters() { 
-            state.currentSort = document.getElementById('sort-select').value; 
-            renderQuests(); 
-        }
-        
-        function setColorFilter(color) { 
-            state.currentColorFilter = color; 
-            updateColorFilterOptions(); 
-            renderQuests(); 
-        }
-
+        function renderAll() { document.getElementById('point-balance').innerText = state.points; renderQuests(); renderRewards(); renderTrash(); }
+        function applyFilters() { state.currentSort = document.getElementById('sort-select').value; renderQuests(); }
+        function setColorFilter(color) { state.currentColorFilter = color; updateColorFilterOptions(); renderQuests(); }
         function updateColorFilterOptions() {
-            const container = document.getElementById('color-swatches-container');
-            const uniqueColors = [...new Set(state.quests.filter(q => !q.isArchived).map(q => q.color))];
-            
+            const container = document.getElementById('color-swatches-container'); const uniqueColors = [...new Set(state.quests.filter(q => !q.isArchived).map(q => q.color))];
             container.innerHTML = `<div class="color-swatch ${state.currentColorFilter === 'all' ? 'active' : ''}" style="background: conic-gradient(#ef4444, #f59e0b, #10b981, #3b82f6, #8b5cf6, #ef4444);" onclick="setColorFilter('all')"></div>`;
-            
-            uniqueColors.forEach(color => {
-                container.innerHTML += `<div class="color-swatch ${state.currentColorFilter === color ? 'active' : ''}" style="background-color: ${color};" onclick="setColorFilter('${color}')"></div>`;
-            });
-        }
-
-        // --- 4. RENDERERS (QUEST, REWARD, TRASH) ---
-        function renderAll() {
-            document.getElementById('point-balance').innerText = state.points;
-            renderQuests(); 
-            renderRewards(); 
-            renderTrash();
+            uniqueColors.forEach(color => { container.innerHTML += `<div class="color-swatch ${state.currentColorFilter === color ? 'active' : ''}" style="background-color: ${color};" onclick="setColorFilter('${color}')"></div>`; });
         }
 
         function renderQuests() {
-            const container = document.getElementById('quests-container'); 
-            container.innerHTML = '';
-            
+            const container = document.getElementById('quests-container'); container.innerHTML = '';
             let filtered = state.quests.filter(q => !q.isArchived && q.cycle === state.currentCycle);
             if (state.currentColorFilter !== 'all') filtered = filtered.filter(q => q.color === state.currentColorFilter);
-            
-            filtered.sort((a, b) => {
-                if(state.currentSort === 'newest') return b.id - a.id;
-                if(state.currentSort === 'highest') return b.points - a.points;
-                if(state.currentSort === 'lowest') return a.points - b.points;
-                return a.id - b.id; // oldest
-            });
-
-            if (filtered.length === 0) { 
-                container.innerHTML = `<div class="empty-state"><svg class="icon icon-xl"><use href="#icon-info"></use></svg><span>Kosong</span></div>`; 
-                return; 
-            }
+            filtered.sort((a, b) => { if(state.currentSort === 'newest') return b.id - a.id; if(state.currentSort === 'highest') return b.points - a.points; if(state.currentSort === 'lowest') return a.points - b.points; return a.id - b.id; });
+            if (filtered.length === 0) { container.innerHTML = `<div class="empty-state"><svg class="icon icon-xl"><use href="#icon-info"></use></svg><span>Kosong</span></div>`; return; }
 
             filtered.forEach(q => {
-                const available = isQuestAvailable(q);
+                const available = isQuestAvailable(q); const wrapper = document.createElement('div'); wrapper.className = 'swipe-container';
+                const actionBg = document.createElement('div'); actionBg.className = 'swipe-action-bg'; actionBg.innerHTML = `<svg class="icon icon-lg"><use href="#icon-trash"></use></svg>`;
+                const card = document.createElement('div'); card.className = `card ${!available ? 'disabled' : ''}`; card.style.borderTop = `4px solid ${q.color}`;
                 
-                // Elemen Wrapper untuk fitur Swipe to Delete
-                const wrapper = document.createElement('div');
-                wrapper.className = 'swipe-container';
-                
-                const actionBg = document.createElement('div');
-                actionBg.className = 'swipe-action-bg';
-                actionBg.innerHTML = `<svg class="icon icon-lg"><use href="#icon-trash"></use></svg>`;
-                
-                const card = document.createElement('div');
-                card.className = `card ${!available ? 'disabled' : ''}`;
-                card.style.borderTop = `4px solid ${q.color}`;
-                
-                // Binding Gestur
                 initSwipeGesture(card, () => moveToTrash('quest', q.id));
+                const quadClass = q.quadrant ? q.quadrant.toLowerCase() : ''; const quadHtml = q.quadrant ? `<span class="quadrant-badge ${quadClass}">${q.quadrant}</span>` : '';
+                const xpValue = q.xp || (q.points * 3);
+                let actionBtn = available ? `<button class="btn btn-primary" style="background:${q.color}" onclick="completeQuest(${q.id}, event)"><svg class="icon icon-sm"><use href="#icon-check"></use></svg> Selesai (+${q.points})</button>` : `<div style="display:flex; gap:8px; width:100%"><button class="btn btn-outline" style="flex:3; color:var(--success); border-color:var(--success)"><svg class="icon icon-sm"><use href="#icon-check"></use></svg> Selesai</button><button class="btn btn-undo" style="flex:1" onclick="undoQuest(${q.id}, event)"><svg class="icon"><use href="#icon-undo"></use></svg></button></div>`;
+                let resetText = ''; if (!available) { if (q.cycle === 'harian') resetText = 'Reset 01:00'; else if (q.cycle === 'mingguan') resetText = 'Reset Senin'; else if (q.cycle === 'bulanan') resetText = 'Reset Tgl 1'; }
 
-                let actionBtn = available 
-                    ? `<button class="btn btn-primary" style="background:${q.color}" onclick="completeQuest(${q.id}, event)"><svg class="icon icon-sm"><use href="#icon-check"></use></svg> Selesai (+${q.points})</button>` 
-                    : `<div style="display:flex; gap:8px; width:100%"><button class="btn btn-outline" style="flex:3; color:var(--success); border-color:var(--success)"><svg class="icon icon-sm"><use href="#icon-check"></use></svg> Selesai</button><button class="btn btn-undo" style="flex:1" onclick="undoQuest(${q.id}, event)"><svg class="icon"><use href="#icon-undo"></use></svg></button></div>`;
-
-                card.innerHTML = `
-                    <div class="quest-header">
-                        <span class="badge" style="color:${q.color}; border-color:${q.color}40"><svg class="icon icon-sm"><use href="#icon-coin"></use></svg> ${q.points} PTS</span>
-                        <span class="edit-btn" onclick="openQuestModal(${q.id})"><svg class="icon icon-sm"><use href="#icon-edit"></use></svg> Edit</span>
-                    </div>
-                    <h3 class="quest-title">${q.title}</h3>
-                    <p class="quest-desc">${q.desc}</p>
-                    ${actionBtn}`;
-                
-                wrapper.appendChild(actionBg); 
-                wrapper.appendChild(card);
-                container.appendChild(wrapper);
+                card.innerHTML = `<div class="quest-header"><div style="display:flex; align-items:center;"><span class="badge" style="color:${q.color}; border-color:${q.color}40"><svg class="icon icon-sm"><use href="#icon-xp"></use></svg> ${xpValue}</span>${quadHtml}</div><div style="display:flex; align-items:center; gap:8px;">${!available ? `<span class="reset-indicator" style="font-size: 0.65rem; color: var(--text-secondary); display: flex; align-items: center; gap: 4px;"><svg class="icon icon-sm"><use href="#icon-clock"></use></svg> ${resetText}</span>` : ''}<span class="edit-btn" onclick="openQuestModal(${q.id})"><svg class="icon icon-sm"><use href="#icon-edit"></use></svg> Edit</span></div></div><h3 class="quest-title">${q.title}</h3><p class="quest-desc">${q.desc}</p>${actionBtn}`;
+                wrapper.appendChild(actionBg); wrapper.appendChild(card); container.appendChild(wrapper);
             });
         }
 
         function renderRewards() {
-            const container = document.getElementById('rewards-container'); 
-            container.innerHTML = '';
-            
-            const activeRewards = state.rewards.filter(r => !r.isArchived);
-            if (activeRewards.length === 0) { 
-                container.innerHTML = `<div class="empty-state"><svg class="icon icon-xl"><use href="#icon-gift"></use></svg><span>Store Kosong</span></div>`; 
-                return; 
-            }
-
+            const container = document.getElementById('rewards-container'); container.innerHTML = ''; const activeRewards = state.rewards.filter(r => !r.isArchived);
+            if (activeRewards.length === 0) { container.innerHTML = `<div class="empty-state"><svg class="icon icon-xl"><use href="#icon-gift"></use></svg><span>Store Kosong</span></div>`; return; }
             activeRewards.forEach(r => {
-                const card = document.createElement('div'); 
-                card.className = 'reward-card';
-                const bgGradient = rewardGradients[r.id % rewardGradients.length];
-                
-                card.innerHTML = `
-                    <div class="reward-banner" style="background:${bgGradient}">
-                        <span class="reward-edit-icon" onclick="openRewardModal(${r.id})"><svg class="icon icon-sm"><use href="#icon-edit"></use></svg> Edit</span>
-                        <svg class="icon icon-xl"><use href="#icon-gift"></use></svg>
-                    </div>
-                    <div class="reward-body">
-                        <h3 class="reward-title-text">${r.title}</h3>
-                        <p class="reward-cost-text"><svg class="icon"><use href="#icon-coin"></use></svg> ${r.cost} PTS</p>
-                        <button class="btn btn-claim" ${state.points < r.cost ? 'disabled' : ''} onclick="buyReward(${r.id})"><svg class="icon"><use href="#icon-bag"></use></svg> Beli</button>
-                    </div>`;
+                const card = document.createElement('div'); card.className = 'reward-card';
+                card.innerHTML = `<div class="reward-banner" style="background:${rewardGradients[r.id % rewardGradients.length]}"><span class="reward-edit-icon" onclick="openRewardModal(${r.id})"><svg class="icon icon-sm"><use href="#icon-edit"></use></svg> Edit</span><svg class="icon icon-xl"><use href="#icon-gift"></use></svg></div><div class="reward-body"><h3 class="reward-title-text">${r.title}</h3><p class="reward-cost-text"><svg class="icon"><use href="#icon-coin"></use></svg> ${r.cost} PTS</p><button class="btn btn-claim" ${state.points < r.cost ? 'disabled' : ''} onclick="buyReward(${r.id})"><svg class="icon"><use href="#icon-bag"></use></svg> Beli</button></div>`;
                 container.appendChild(card);
             });
         }
 
         function renderTrash() {
-            const container = document.getElementById('trash-container'); 
-            container.innerHTML = '';
-            
+            const container = document.getElementById('trash-container'); container.innerHTML = '';
             const arch = [...state.quests.filter(q => q.isArchived), ...state.rewards.filter(r => r.isArchived)];
-            if (arch.length === 0) { 
-                container.innerHTML = `<div class="empty-state"><svg class="icon icon-xl"><use href="#icon-trash"></use></svg><span>Keranjang Kosong</span></div>`; 
-                return; 
-            }
-
+            if (arch.length === 0) { container.innerHTML = `<div class="empty-state"><svg class="icon icon-xl"><use href="#icon-trash"></use></svg><span>Keranjang Kosong</span></div>`; return; }
             arch.forEach(item => {
-                const type = item.cost ? 'reward' : 'quest';
-                const card = document.createElement('div'); 
-                card.className = 'card'; 
-                card.style.opacity = '0.7';
-                card.innerHTML = `
-                    <h3 class="quest-title">${item.title}</h3>
-                    <div style="display:flex; gap:8px; margin-top: 10px;">
-                        <button class="btn btn-outline" style="flex:1" onclick="restoreTrash('${type}',${item.id})"><svg class="icon"><use href="#icon-undo"></use></svg> Pulihkan</button>
-                        <button class="btn btn-outline" style="flex:1; color:var(--danger); border-color:var(--danger)" onclick="delPerm('${type}',${item.id})">Hapus</button>
-                    </div>`;
+                const type = item.cost ? 'reward' : 'quest'; const card = document.createElement('div'); card.className = 'card'; card.style.opacity = '0.7';
+                card.innerHTML = `<h3 class="quest-title">${item.title}</h3><div style="display:flex; gap:8px; margin-top: 10px;"><button class="btn btn-outline" style="flex:1" onclick="restoreTrash('${type}',${item.id})"><svg class="icon"><use href="#icon-undo"></use></svg> Pulihkan</button><button class="btn btn-outline" style="flex:1; color:var(--danger); border-color:var(--danger)" onclick="delPerm('${type}',${item.id})">Hapus</button></div>`;
                 container.appendChild(card);
             });
         }
 
-        // --- 5. LOGIKA GESTUR KARTU (SWIPE TO DELETE) ---
         function initSwipeGesture(el, onConfirm) {
             let startX = 0; let currentX = 0; let isSwiping = false;
-            
-            el.addEventListener('touchstart', (e) => {
-                // Hanya aktif jika bukan klik tombol di dalamnya
-                if(e.target.closest('button') || e.target.closest('.edit-btn')) return;
-                startX = e.touches[0].clientX;
-                el.style.transition = 'none';
-                isSwiping = true;
-            }, {passive: true});
-
-            el.addEventListener('touchmove', (e) => {
-                if(!isSwiping) return;
-                currentX = e.touches[0].clientX - startX;
-                if(currentX > 0) currentX = 0; 
-                if(currentX < -150) currentX = -150; 
-                el.style.transform = `translateX(${currentX}px)`;
-            }, {passive: true});
-
-            el.addEventListener('touchend', () => {
-                if(!isSwiping) return;
-                isSwiping = false;
-                el.style.transition = 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
-                if(currentX < -100) {
-                    el.style.transform = 'translateX(-100%)';
-                    setTimeout(() => { onConfirm(); }, 200);
-                } else {
-                    el.style.transform = 'translateX(0)';
-                }
-                currentX = 0;
-            });
+            el.addEventListener('touchstart', (e) => { if(e.target.closest('button') || e.target.closest('.edit-btn')) return; startX = e.touches[0].clientX; el.style.transition = 'none'; isSwiping = true; }, {passive: true});
+            el.addEventListener('touchmove', (e) => { if(!isSwiping) return; currentX = e.touches[0].clientX - startX; if(currentX > 0) currentX = 0; if(currentX < -150) currentX = -150; el.style.transform = `translateX(${currentX}px)`; }, {passive: true});
+            el.addEventListener('touchend', () => { if(!isSwiping) return; isSwiping = false; el.style.transition = 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)'; if(currentX < -100) { el.style.transform = 'translateX(-100%)'; setTimeout(() => { onConfirm(); }, 200); } else { el.style.transform = 'translateX(0)'; } currentX = 0; });
         }
 
-        // --- 6. AKSI TOMBOL (COMPLETE, UNDO, BUY) ---
-        function completeQuest(id, e) { 
-            e.stopPropagation(); 
-            const q = state.quests.find(x => x.id === id); 
-            q.lastCompleted = new Date().toISOString(); 
-            state.points += q.points; 
-            saveData(); renderAll(); showToast('check', `+${q.points} PTS!`); 
-        }
+        function completeQuest(id, e) { e.stopPropagation(); const q = state.quests.find(x => x.id === id); q.lastCompleted = new Date().toISOString(); const xpGained = q.xp || (q.points * 3); state.points += q.points; state.totalXP = (state.totalXP || 0) + xpGained; saveData(); updateLevelUI(); renderAll(); showToast('check', `+${q.points} PTS!`); }
+        function undoQuest(id, e) { e.stopPropagation(); const q = state.quests.find(x => x.id === id); const xpLost = q.xp || (q.points * 3); state.points -= q.points; state.totalXP -= xpLost; if(state.totalXP < 0) state.totalXP = 0; q.lastCompleted = null; saveData(); updateLevelUI(); renderAll(); showToast('undo', 'Dibatalkan.'); }
+        function buyReward(id) { const r = state.rewards.find(x => x.id === id); if(state.points >= r.cost) { state.points -= r.cost; state.inventory.push({id: Date.now(), title: r.title, cost: r.cost, status:'unused', date: new Date().toISOString()}); saveData(); renderAll(); showToast('bag', 'Berhasil dibeli!'); } }
+
+        function saveQuest() { const id = document.getElementById('quest-id').value; const pts = parseInt(document.getElementById('quest-points').value) || 0; const qData = { title: document.getElementById('quest-title').value || 'Quest', desc: document.getElementById('quest-desc').value, points: pts, xp: parseInt(document.getElementById('quest-xp').value) || (pts*3), color: document.getElementById('quest-color').value, quadrant: document.getElementById('quest-quadrant').value, cycle: document.getElementById('quest-cycle').value }; if(id) Object.assign(state.quests.find(x => x.id == id), qData); else state.quests.push({ id: Date.now(), ...qData, lastCompleted: null, isArchived: false }); saveData(); closeModals(); updateColorFilterOptions(); renderAll(); }
+        function saveReward() { const id = document.getElementById('reward-id').value; const rData = { title: document.getElementById('reward-title').value || 'Reward', cost: parseInt(document.getElementById('reward-cost').value) || 0 }; if(id) Object.assign(state.rewards.find(x => x.id == id), rData); else state.rewards.push({ id: Date.now(), ...rData, isArchived: false }); saveData(); closeModals(); renderAll(); }
         
-        function undoQuest(id, e) { 
-            e.stopPropagation(); 
-            const q = state.quests.find(x => x.id === id); 
-            state.points -= q.points; 
-            q.lastCompleted = null; 
-            saveData(); renderAll(); showToast('undo', 'Dibatalkan.'); 
-        }
-        
-        function buyReward(id) { 
-            const r = state.rewards.find(x => x.id === id); 
-            if(state.points >= r.cost) { 
-                state.points -= r.cost; 
-                state.inventory.push({id: Date.now(), title: r.title, cost: r.cost, status:'unused', date: new Date().toISOString()}); 
-                saveData(); renderAll(); showToast('bag', 'Berhasil dibeli!'); 
-            } 
-        }
+        function openQuestModal(id) { const q = id ? state.quests.find(x => x.id === id) : {id:'', title:'', desc:'', points:10, xp:30, color:'#6366f1', quadrant:'Q1', cycle: state.currentCycle}; document.getElementById('questModalTitle').innerHTML = `<svg class="icon"><use href="#icon-edit"></use></svg> ` + (id ? 'Edit Quest' : 'Tambah Quest'); document.getElementById('quest-id').value = q.id; document.getElementById('quest-title').value = q.title; document.getElementById('quest-desc').value = q.desc; document.getElementById('quest-points').value = q.points; document.getElementById('quest-xp').value = q.xp || (q.points*3); document.getElementById('quest-color').value = q.color; document.getElementById('quest-quadrant').value = q.quadrant || 'Q1'; document.getElementById('quest-cycle').value = q.cycle; document.getElementById('questModal').classList.add('open'); document.getElementById('overlay').classList.add('show'); }
+        function openRewardModal(id) { const r = id ? state.rewards.find(x => x.id === id) : {id:'', title:'', cost:100}; document.getElementById('rewardModalTitle').innerHTML = `<svg class="icon"><use href="#icon-edit"></use></svg> ` + (id ? 'Edit Reward' : 'Tambah Reward'); document.getElementById('reward-id').value = r.id; document.getElementById('reward-title').value = r.title; document.getElementById('reward-cost').value = r.cost; document.getElementById('rewardModal').classList.add('open'); document.getElementById('overlay').classList.add('show'); }
 
-        // --- 7. MANAJEMEN DATA MODAL (ADD/EDIT QUEST & REWARD) ---
-        function openQuestModal(id) {
-            const q = id ? state.quests.find(x => x.id === id) : {id:'', title:'', desc:'', points:10, color:'#6366f1', cycle: state.currentCycle};
-            document.getElementById('questModalTitle').innerHTML = `<svg class="icon"><use href="#icon-edit"></use></svg> ` + (id ? 'Edit Quest' : 'Tambah Quest');
-            document.getElementById('quest-id').value = q.id; document.getElementById('quest-title').value = q.title; document.getElementById('quest-desc').value = q.desc; document.getElementById('quest-points').value = q.points; document.getElementById('quest-color').value = q.color; document.getElementById('quest-cycle').value = q.cycle;
-            document.getElementById('questModal').classList.add('open'); document.getElementById('overlay').classList.add('show');
-        }
+        function openInventoryModal() { const container = document.getElementById('inventory-container'); container.innerHTML = ''; if(state.inventory.length === 0) container.innerHTML = `<div class="empty-state"><svg class="icon icon-xl"><use href="#icon-bag"></use></svg><span>Tas Kosong</span></div>`; const sortedInv = [...state.inventory].sort((a,b) => (a.status === 'used' ? 1 : -1)); sortedInv.forEach(item => { const div = document.createElement('div'); div.className = `inv-item ${item.status}`; const dateStr = new Date(item.date).toLocaleDateString('id-ID'); const btnHTML = item.status === 'unused' ? `<button class="btn btn-primary" style="width:auto; padding:6px 12px; font-size:0.75rem;" onclick="useInventoryItem(${item.id})">Gunakan</button>` : `<span style="font-size:0.75rem; color:var(--text-secondary); font-weight:bold;">Dipakai</span>`; div.innerHTML = `<div style="flex-grow:1"><h4>${item.title}</h4><p style="font-size:0.75rem; color:var(--text-secondary); display:flex; align-items:center; gap:4px;"><svg class="icon icon-sm"><use href="#icon-clock"></use></svg> ${dateStr}</p></div>${btnHTML}`; container.appendChild(div); }); document.getElementById('inventoryModal').classList.add('open'); document.getElementById('overlay').classList.add('show'); }
+        function useInventoryItem(id) { if(confirm(`Gunakan hadiah ini?`)) { state.inventory.find(i => i.id === id).status = 'used'; saveData(); openInventoryModal(); } }
+        function openStreakModal() { const list = document.getElementById('streak-rewards-list'); list.innerHTML = ''; const goals = [{ days: 3, points: 50 }, { days: 7, points: 200 }, { days: 30, points: 1500 }]; goals.forEach(g => { const isClaimed = state.claimedStreaks.includes(`${g.days}-${state.lastLoginDate}`); const canClaim = state.streak >= g.days && !isClaimed; const div = document.createElement('div'); div.className = `streak-option ${canClaim ? 'available' : ''} ${isClaimed ? 'claimed' : ''}`; div.innerHTML = `<div><div style="font-weight: 700;">${g.days} Hari Streak</div><div style="font-size: 0.75rem; color: var(--success); display:flex; align-items:center; gap:4px; margin-top:2px;"><svg class="icon icon-sm"><use href="#icon-coin"></use></svg> +${g.points} PTS</div></div><button class="btn btn-primary" style="width: auto; padding: 6px 12px;" ${!canClaim ? 'disabled' : ''} onclick="claimStreak(${g.days}, ${g.points})"><svg class="icon icon-sm"><use href="${isClaimed ? '#icon-check' : '#icon-gift'}"></use></svg> ${isClaimed ? 'Diklaim' : 'Redeem'}</button>`; list.appendChild(div); }); document.getElementById('streakModal').classList.add('open'); document.getElementById('overlay').classList.add('show'); }
+        function claimStreak(days, points) { state.points += points; state.claimedStreaks.push(`${days}-${state.lastLoginDate}`); saveData(); openStreakModal(); renderAll(); showToast('fire', `+${points} PTS!`); }
 
-        function saveQuest() {
-            const id = document.getElementById('quest-id').value;
-            const qData = { title: document.getElementById('quest-title').value || 'Quest', desc: document.getElementById('quest-desc').value, points: parseInt(document.getElementById('quest-points').value) || 0, color: document.getElementById('quest-color').value, cycle: document.getElementById('quest-cycle').value };
-            if(id) Object.assign(state.quests.find(x => x.id == id), qData);
-            else state.quests.push({ id: Date.now(), ...qData, lastCompleted: null, isArchived: false });
-            saveData(); closeModals(); updateColorFilterOptions(); renderAll();
-        }
-
-        function openRewardModal(id) {
-            const r = id ? state.rewards.find(x => x.id === id) : {id:'', title:'', cost:100};
-            document.getElementById('rewardModalTitle').innerHTML = `<svg class="icon"><use href="#icon-edit"></use></svg> ` + (id ? 'Edit Reward' : 'Tambah Reward');
-            document.getElementById('reward-id').value = r.id; document.getElementById('reward-title').value = r.title; document.getElementById('reward-cost').value = r.cost;
-            document.getElementById('rewardModal').classList.add('open'); document.getElementById('overlay').classList.add('show');
-        }
-
-        function saveReward() {
-            const id = document.getElementById('reward-id').value;
-            const rData = { title: document.getElementById('reward-title').value || 'Reward', cost: parseInt(document.getElementById('reward-cost').value) || 0 };
-            if(id) Object.assign(state.rewards.find(x => x.id == id), rData);
-            else state.rewards.push({ id: Date.now(), ...rData, isArchived: false });
-            saveData(); closeModals(); renderAll();
-        }
-
-        // --- 8. TAS HADIAHKU (INVENTORY) & STREAK MODAL ---
-        function openInventoryModal() {
-            const container = document.getElementById('inventory-container'); container.innerHTML = '';
-            if(state.inventory.length === 0) { container.innerHTML = `<div class="empty-state"><svg class="icon icon-xl"><use href="#icon-bag"></use></svg><span>Tas Kosong</span></div>`; }
-            
-            const sortedInv = [...state.inventory].sort((a,b) => (a.status === 'used' ? 1 : -1));
-            sortedInv.forEach(item => {
-                const div = document.createElement('div'); div.className = `inv-item ${item.status}`;
-                const dateStr = new Date(item.date).toLocaleDateString('id-ID');
-                const btnHTML = item.status === 'unused' ? `<button class="btn btn-primary" style="width:auto; padding:6px 12px; font-size:0.75rem;" onclick="useInventoryItem(${item.id})">Gunakan</button>` : `<span style="font-size:0.75rem; color:var(--text-secondary); font-weight:bold;">Telah Dipakai</span>`;
-                div.innerHTML = `<div style="flex-grow:1"><h4>${item.title}</h4><p style="font-size:0.75rem; color:var(--text-secondary); display:flex; gap:4px; align-items:center"><svg class="icon icon-sm"><use href="#icon-clock"></use></svg> ${dateStr}</p></div>${btnHTML}`;
-                container.appendChild(div);
-            });
-            document.getElementById('inventoryModal').classList.add('open'); document.getElementById('overlay').classList.add('show');
-        }
-
-        function useInventoryItem(id) { 
-            const item = state.inventory.find(i => i.id === id); 
-            if(item && confirm(`Gunakan hadiah "${item.title}" sekarang?`)) { item.status = 'used'; saveData(); openInventoryModal(); } 
-        }
-
-        function openStreakModal() {
-            const list = document.getElementById('streak-rewards-list'); list.innerHTML = '';
-            const goals = [{ days: 3, points: 50 }, { days: 7, points: 200 }, { days: 30, points: 1500 }];
-            
-            goals.forEach(g => {
-                const isClaimed = state.claimedStreaks.includes(`${g.days}-${state.lastLoginDate}`);
-                const canClaim = state.streak >= g.days && !isClaimed;
-                const div = document.createElement('div'); div.className = `streak-option ${canClaim ? 'available' : ''} ${isClaimed ? 'claimed' : ''}`;
-                div.innerHTML = `<div><div style="font-weight: 700;">${g.days} Hari Streak</div><div style="font-size: 0.75rem; color: var(--success); display:flex; align-items:center; gap:4px;"><svg class="icon icon-sm"><use href="#icon-coin"></use></svg> +${g.points} PTS</div></div><button class="btn btn-primary" style="width: auto; padding: 6px 12px;" ${!canClaim ? 'disabled' : ''} onclick="claimStreak(${g.days}, ${g.points})"><svg class="icon icon-sm"><use href="${isClaimed ? '#icon-check' : '#icon-gift'}"></use></svg> ${isClaimed ? 'Diklaim' : 'Redeem'}</button>`;
-                list.appendChild(div);
-            });
-            document.getElementById('streakModal').classList.add('open'); document.getElementById('overlay').classList.add('show');
-        }
-
-        function claimStreak(days, points) { 
-            state.points += points; state.claimedStreaks.push(`${days}-${state.lastLoginDate}`); saveData(); openStreakModal(); renderAll(); showToast('fire', `+${points} PTS dari Streak!`); 
-        }
-
-        // --- 9. PENGATURAN HAMBURGER MENU (BACKUP/RESTORE/TRASH) ---
         function moveToTrash(type, id) { if(type==='quest') state.quests.find(x => x.id === id).isArchived = true; else state.rewards.find(x => x.id === id).isArchived = true; saveData(); renderAll(); updateColorFilterOptions(); }
         function restoreTrash(type, id) { if(type==='quest') state.quests.find(x => x.id === id).isArchived = false; else state.rewards.find(x => x.id === id).isArchived = false; saveData(); renderAll(); updateColorFilterOptions(); }
         function delPerm(type, id) { if(confirm("Hapus selamanya?")) { if(type==='quest') state.quests = state.quests.filter(x => x.id !== id); else state.rewards = state.rewards.filter(x => x.id !== id); saveData(); renderAll(); updateColorFilterOptions(); } }
-        
-        function backupData() { 
-            const blob = new Blob([localStorage.getItem('lifeQuest_v3')||"{}"], {type:"application/json"}); 
-            const a = document.createElement('a'); a.href = URL.createObjectURL(blob); 
-            a.download = `LifeQuest_${new Date().toISOString().split('T')[0]}.json`; a.click(); 
-            toggleSidebar(); 
-        }
-        
-        function processRestore(event) { 
-            const file = event.target.files[0]; if(!file) return; 
-            const reader = new FileReader(); 
-            reader.onload = function(e){ 
-                try { 
-                    const data = JSON.parse(e.target.result); 
-                    if(data.points !== undefined){ 
-                        localStorage.setItem('lifeQuest_v3', JSON.stringify(data)); 
-                        loadData(); showToast('check', "Data Pulih!"); 
-                    } 
-                } catch(err){ alert("Gagal memuat data"); } 
-            }; 
-            reader.readAsText(file); toggleSidebar(); event.target.value=''; 
-        }
-        
-        function deleteAllData() { 
-            if(confirm("YAKIN Hapus SEMUA data?")) { 
-                state = { points: 0, quests: [], rewards: [], inventory: [], streak: 1, lastLoginDate: null, claimedStreaks: [], currentCycle: 'harian', currentTab: 'quests', currentSort: 'newest', currentColorFilter: 'all' };
-                saveData(); renderAll(); toggleSidebar(); switchTab('quests'); updateColorFilterOptions();
-            } 
-        }
+        function backupData() { const blob = new Blob([localStorage.getItem('lifeQuest_v3')||"{}"], {type:"application/json"}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `LifeQuest_${new Date().toISOString().split('T')[0]}.json`; a.click(); toggleSidebar(); }
+        function processRestore(event) { const file = event.target.files[0]; if(!file) return; const reader = new FileReader(); reader.onload = function(e){ try { const data = JSON.parse(e.target.result); if(data.points !== undefined){ localStorage.setItem('lifeQuest_v3', JSON.stringify(data)); loadData(); showToast('check', "Data Pulih!"); } } catch(err){ alert("Gagal memuat data"); } }; reader.readAsText(file); toggleSidebar(); event.target.value=''; }
+        function deleteAllData() { if(confirm("YAKIN Hapus SEMUA data?")) { state = { points: 0, totalXP: 0, currentLevel: 1, currentTitle: 'Novice', quests: [], rewards: [], inventory: [], streak: 1, lastLoginDate: null, claimedStreaks: [], currentCycle: 'harian', currentTab: 'quests', currentSort: 'newest', currentColorFilter: 'all' }; saveData(); renderAll(); toggleSidebar(); switchTab('quests'); updateColorFilterOptions(); updateLevelUI(); } }
 
-        // --- 10. UI HELPERS & NAVIGATION ---
         function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); document.getElementById('overlay').classList.toggle('show'); }
         function closeModals() { document.querySelectorAll('.modal').forEach(m => m.classList.remove('open')); document.getElementById('overlay').classList.remove('show'); document.getElementById('sidebar').classList.remove('open'); }
-        
-        function switchTab(tab) { 
-            state.currentTab = tab; 
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.target === tab)); 
-            document.getElementById('section-quests').classList.toggle('active', tab==='quests'); 
-            document.getElementById('section-rewards').classList.toggle('active', tab==='rewards'); 
-            document.getElementById('section-trash').classList.toggle('active', tab==='trash'); 
-            document.getElementById('quest-toolbar').style.display = tab==='quests' ? 'flex' : 'none'; 
-            document.getElementById('main-fab').style.display = tab==='trash' ? 'none' : 'flex'; 
-            renderAll(); 
-        }
-        
+        function switchTab(tab) { state.currentTab = tab; document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.target === tab)); document.getElementById('section-quests').classList.toggle('active', tab==='quests'); document.getElementById('section-rewards').classList.toggle('active', tab==='rewards'); document.getElementById('section-trash').classList.toggle('active', tab==='trash'); document.getElementById('quest-toolbar').style.display = tab==='quests' ? 'flex' : 'none'; document.getElementById('main-fab').style.display = tab==='trash' ? 'none' : 'flex'; renderAll(); }
         function openTrash() { switchTab('trash'); toggleSidebar(); }
         function setCycle(c, btn) { state.currentCycle = c; document.querySelectorAll('.pill').forEach(p => p.classList.toggle('active', p === btn)); renderQuests(); }
         function handleFabClick() { if(state.currentTab === 'quests') openQuestModal(null); else openRewardModal(null); }
         function openFilterModal() { document.getElementById('filterModal').classList.add('open'); document.getElementById('overlay').classList.add('show'); }
-        
-        function showToast(icon, msg) { 
-            const t = document.getElementById('toast-msg'); 
-            t.innerHTML = `<svg class="icon"><use href="#icon-${icon}"></use></svg> ${msg}`; 
-            t.classList.add('show'); 
-            setTimeout(() => t.classList.remove('show'), 3000); 
-        }
+        function showToast(icon, msg) { const t = document.getElementById('toast-msg'); t.innerHTML = `<svg class="icon"><use href="#icon-${icon}"></use></svg> ${msg}`; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 3000); }
 
-        // --- 11. GESTUR SWIPE LAYAR (TAB SWITCHING) ---
         let mainStartX = 0; let mainEndX = 0; const mainSwipeArea = document.getElementById('swipe-area');
-        mainSwipeArea.addEventListener('touchstart', (e) => { 
-            // Abaikan jika menyentuh kartu (kartu punya logic swipe-to-delete sendiri)
-            if(e.target.closest('.card')) return;
-            mainStartX = e.touches[0].screenX; 
-        }, { passive: true });
-        mainSwipeArea.addEventListener('touchend', (e) => { 
-            if(mainStartX === 0) return;
-            mainEndX = e.changedTouches[0].screenX; 
-            handleMainSwipe(); 
-            mainStartX = 0;
-        }, { passive: true });
-        function handleMainSwipe() { 
-            if (state.currentTab === 'trash') return; 
-            const dist = mainStartX - mainEndX; 
-            if (dist > 80 && state.currentTab === 'quests') switchTab('rewards'); 
-            else if (dist < -80 && state.currentTab === 'rewards') switchTab('quests'); 
-        }
+        mainSwipeArea.addEventListener('touchstart', (e) => { if(e.target.closest('.card')) return; mainStartX = e.touches[0].screenX; }, { passive: true });
+        mainSwipeArea.addEventListener('touchend', (e) => { if(mainStartX === 0) return; mainEndX = e.changedTouches[0].screenX; if(state.currentTab !== 'trash') { const dist = mainStartX - mainEndX; if (dist > 80 && state.currentTab === 'quests') switchTab('rewards'); else if (dist < -80 && state.currentTab === 'rewards') switchTab('quests'); } mainStartX = 0; }, { passive: true });
 
-        // Initialize
+        // Inisialisasi PWA Pembasmi Cache
+        if ('serviceWorker' in navigator) { navigator.serviceWorker.getRegistrations().then(function(r) { for(let i of r) i.unregister(); }); }
         window.onload = loadData;
-        if ('serviceWorker' in navigator) { window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js').catch(()=>{}); }); }
     </script>
 </body>
 </html>
